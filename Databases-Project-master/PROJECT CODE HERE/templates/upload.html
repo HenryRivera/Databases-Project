@@ -1,0 +1,73 @@
+<html>
+    <head>
+        <title>Image Upload</title>
+    </head>
+    <body>
+        <h1>Upload an Image!</h1>
+        <div>
+            <form action="/uploadImage" method="post" enctype="multipart/form-data">
+                <input type="file" name="imageToUpload" accept="image/*" required>
+                <!--<br/>
+                <input type="checkbox" value="True" name="allFollowers"> Make this photo visible to all followers? (Check for yes)-->
+                <div>
+                {% if groupNames|length == 0 %}
+                    <select name="who" onChange="updateOptions(this)" autocomplete="off" required>
+                        <option value="" selected="selected">-- Who Can View This Post? --</option>
+                        <option value="allFollowers">All Followers</option>
+                    </select>
+                {% else %}
+                    <select name="who" onChange="updateOptions(this)" autocomplete="off" required>
+                        <option value="" selected="selected">-- Who Can View This Post? --</option>
+                        <option value="allFollowers">All Followers</option>
+                        <option value="friendGroups">Specific Friend Groups</option>
+                    </select>
+                    {% for group in groupNames %}
+                    <br/>
+                    <label for="{{group.groupName}}" class="labelWrapper" disabled style="display: none;"><input type="checkbox" class="checkboxes" value="groupSelected" name="{{group.groupName}}" id={{group.groupName}}> {{group.groupName}} </label>
+                    {% endfor %}
+                {% endif %}
+                </div>
+                <!--<br/>-->
+                <input type="submit" value="Upload">
+            </form>
+        </div>
+        {% if message %}
+            {{ message }}
+        {% endif %}
+        <br/>
+        <a href="/">Go back</a>
+    </body>
+<script>
+    function updateOptions(valSelected) {
+        boxes = document.querySelectorAll(".checkboxes");
+        labels = document.querySelectorAll(".labelWrapper");
+        if (valSelected.value == "friendGroups") {
+            for (i = 0; i < boxes.length; ++i) {
+                boxes[i].disabled = false;
+                labels[i].style.display = "inline";
+            }
+        }
+        else {
+            for (i = 0; i < boxes.length; ++i) {
+                boxes[i].checked = false;
+                boxes[i].disabled = true;
+                labels[i].style.display = "none";
+            }
+        }
+    }
+    function boxesChecked() { // this function is a WIP, but I want to make sure they can't break the webapp by not selecting a friendgroup to share with
+        boxes = document.querySelectorAll(".checkboxes");
+        count = 0;
+
+        for (box in boxes) {
+            if (box.checked){
+                ++count;
+            }
+        }
+        if (!count) {
+            // if none of the boxes were checked then we don't want to allow form submission
+            // need to figure out how to do this
+        }
+    }
+</script>
+</html>
