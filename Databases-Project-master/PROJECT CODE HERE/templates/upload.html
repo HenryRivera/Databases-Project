@@ -23,7 +23,7 @@
                     </select>
                     {% for group in groupNames %}
                     <br/>
-                    <label for="{{group.groupName}}" class="labelWrapper" disabled style="display: none;"><input type="checkbox" class="checkboxes" value="groupSelected" name="{{group.groupName}}" id={{group.groupName}}> {{group.groupName}} </label>
+                    <label for="{{group.groupName}}" class="labelWrapper" disabled style="display: none;"><input type="checkbox" class="checkboxes" value="{{group.owner_username}}" name="{{group.groupName}}" id="{{group.groupName}}"> {{group.groupName}} </label>
                     {% endfor %}
                 {% endif %}
                 </div>
