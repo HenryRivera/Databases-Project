@@ -62,6 +62,7 @@ def upload():
     return render_template("upload.html", groupNames=data)
 
 
+# CODE FOR FEATURE 1
 @app.route("/images", methods=["GET"])
 @login_required
 def images():
@@ -88,7 +89,7 @@ def login():
 def register():
     return render_template("register.html")
 
-
+# CODE FOR LOGIN
 @app.route("/loginAuth", methods=["POST"])
 def loginAuth():
     if request.form:
@@ -142,7 +143,7 @@ def logout():
     session.pop("username")
     return redirect("/")
 
-
+# CODE FOR FEATURE 3
 @app.route("/uploadImage", methods=["POST"])
 @login_required
 def upload_image():
