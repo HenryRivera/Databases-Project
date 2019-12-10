@@ -23,6 +23,7 @@
             {% for image in images %}
             <div class="imageContainer">
                 <img src="/image/{{image.filePath}}" width="300"/>
+                <p>Posted by: {{firstName}} {{ lastName }} on {{image.postingdate}}</p>
                 <button type="button" class="likeImage" onClick="sendImageData(this); return false;" value="{{ image.photoID }}" name="notLiked">Like</button>
             </div>
             {% endfor %}
