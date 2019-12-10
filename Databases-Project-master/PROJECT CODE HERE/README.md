@@ -45,7 +45,8 @@ Extra Features Implemented:
   a.	Search for photos that are visible to the user and that were posted by some particular person (the user or someone             else) 
 •	Add friendGroup: Henry implemented this feature and Brandon tested
 
-  a.	User provides a name for the group. Finstagram creates the group with current user as the groupOwner, provided that           they don’t already own a group with this name. Gives meaningful error message if the current user already has a group         with this name. 
+  a.	User provides a name for the group. Finstagram creates the group with current user as the groupOwner, provided that           they don’t already own a group with this name. Gives meaningful error message if the current user already has a group         with this name.
+  
 •	Add friend: Brandon implemented this feature and Henry tested
 
   a.	User selects an existing FriendGroup that they own and provides username of someone she’d like to add to the group.           Finstagram checks whether there is exactly one person with that name and updates the Belong table to indicate that the         selected person is now in the FriendGroup. Unusual situation such as the person already being in the group should be           handled gracefully. 
