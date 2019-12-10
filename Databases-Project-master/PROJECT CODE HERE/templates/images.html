@@ -18,7 +18,7 @@
         </style>
     </head>
     <body>
-        <h1>Image Gallery</h1>
+        <h1>{{ username }}'s posts</h1>
         <div>
             {% for image in images %}
             <div class="imageContainer">
@@ -34,10 +34,10 @@
     function sendImageData(element) {
         if (element.name == "notLiked"){
             $.post( "/likeImage", {
-            photoID: element.value 
+            photoID: element.value
             });
             element.setAttribute("name", "Liked")
-        }   
+        }
     }
 </script>
 </html>
