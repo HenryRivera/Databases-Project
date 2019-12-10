@@ -63,14 +63,39 @@ def upload():
 
 
 # CODE FOR FEATURE 1
-@app.route("/images", methods=["GET"])
+@app.route('/images', methods=["GET"])
 @login_required
 def images():
-    query = "SELECT * FROM Photo"
-    with connection.cursor() as cursor:
-        cursor.execute(query)
+    username = session["username"]
+    # get the users information
+    cursor = connection.cursor()
+    query = 'SELECT * FROM Person WHERE username = %s'
+    cursor.execute(query, (username))
+    data = cursor.fetchone()
+    firstName = data["firstName"]
+    lastName = data["lastName"]
+    # get the photos visible to the username
+    query = 'SELECT photoID,postingdate,filepath,caption,photoPoster FROM Photo WHERE photoPoster = %s OR photoID IN ' \
+            '(SELECT photoID FROM Photo WHERE photoPoster != %s AND allFollowers = 1 AND photoPoster IN ' \
+            '(SELECT username_followed FROM follow WHERE username_follower = %s AND username_followed = photoPoster AND followstatus = 1)) OR photoID IN ' \
+            '(SELECT photoID FROM sharedwith NATURAL JOIN belongto NATURAL JOIN photo WHERE member_username = %s AND photoPoster != %s) ORDER BY postingdate DESC'
+    cursor.execute(query, (username, username, username, username, username))
     data = cursor.fetchall()
-    return render_template("images.html", images=data)
+    for post in data:  # post is a dictionary within a list of dictionaries for all the photos
+        query = 'SELECT username, firstName, lastName FROM Tagged NATURAL JOIN Person WHERE tagstatus = 1 AND photoID = %s'
+        cursor.execute(query, (post['photoID']))
+        result = cursor.fetchall()
+        print('hello')
+        if result:
+            post['tagees'] = result
+        query = 'SELECT firstName, lastName FROM Person WHERE username = %s'
+        cursor.execute(query, (post['photoPoster']))
+        ownerInfo = cursor.fetchone()
+        post['firstName'] = ownerInfo['firstName']
+        post['lastName'] = ownerInfo['lastName']
+
+    cursor.close()
+    return render_template('images.html', images=data, firstName=firstName, lastName=lastName)
 
 
 @app.route("/image/<image_name>", methods=["GET"])
@@ -199,6 +224,54 @@ def upload_image():
     else:
         message = "Failed to upload image."
         return render_template("upload.html", message=message)
+
+@app.route("/follow", methods=["GET", "POST"])
+@login_required
+def follow():
+    if request.form:
+        username = request.form['username']
+        cursor = connection.cursor()
+        query = 'SELECT * FROM person WHERE username = %s'
+        cursor.execute(query, (username))
+        data = cursor.fetchone()
+
+        if data:  # if there is username with given "username"
+            query = "SELECT * FROM follow WHERE username_followed = %s AND username_follower = %s"
+            cursor.execute(query, (username, session['username']))
+            data = cursor.fetchone()
+            if (data):
+                if (data["followstatus"] == 1):
+                    error = "Already following user"
+                else:
+                    error = "Request is still pending"
+                return render_template("follow.html", message=error)
+            else:
+                query = "INSERT INTO follow VALUES(%s, %s, 0)"
+                connection.commit()
+                cursor.execute(query, (username, session['username']))
+                message = "Follow Request Successful!"
+                return render_template("follow.html", message=message)
+        else:
+            # returns an error message to the html page
+            error = 'Invalid username'
+        cursor.close()
+        return render_template('follow.html', message=error)
+    return render_template('follow.html')
+
+
+@app.route("/manageRequests", methods=["GET", "POST"])
+@login_required
+def manageRequests():
+    # get all the requests that have followstatus = 0 for the current user
+    cursor = connection.cursor()
+    query = "SELECT username_follower FROM follow WHERE username_followed = %s"
+    cursor.execute(query, (session["username"]))
+    data = cursor.fetchall()
+    if request.form:
+        pass
+        # handle form goes here
+    cursor.close()
+    return render_template("manageRequests.html", followers=data)
 
 
 if __name__ == "__main__":
