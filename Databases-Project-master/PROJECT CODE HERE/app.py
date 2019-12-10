@@ -272,6 +272,31 @@ def manageRequests():
         # handle form goes here
     cursor.close()
     return render_template("manageRequests.html", followers=data)
+  
+@app.route("/registerFriendGroup", methods=["GET"])
+def registerFriendGroup():
+    return render_template("registerFriendGroup.html")
+  
+  
+@app.route("/registerAuthFG", methods=["POST"])
+def registerAuthFG():
+    username = session["username"]
+    if request.form:
+        requestData = request.form
+        groupName = requestData["groupName"]
+        description = requestData["description"]
+
+        try:
+            with connection.cursor() as cursor:
+                query = "INSERT INTO Friendgroup (groupOwner, groupName, description) VALUES (%s, %s, %s)"
+                cursor.execute(query, (username, groupName, description))
+        except pymysql.err.IntegrityError:
+            error = "%s already exists." % groupName
+            return render_template('registerFriendGroup.html', error=error)
+        return redirect(url_for("home"))
+
+    error = "An error has occurred. Please try again."
+    return render_template("registerFriendGroup.html", error=error)
 
 
 if __name__ == "__main__":
