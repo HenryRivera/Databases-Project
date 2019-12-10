@@ -42,7 +42,8 @@ Extra Features Implemented:
  
 •	Search by poster: Henry implemented this feature and Brandon tested
 
-  a.	Search for photos that are visible to the user and that were posted by some particular person (the user or someone             else) 
+  a.	Search for photos that are visible to the user and that were posted by some particular person (the user or someone             else)
+  
 •	Add friendGroup: Henry implemented this feature and Brandon tested
 
   a.	User provides a name for the group. Finstagram creates the group with current user as the groupOwner, provided that           they don’t already own a group with this name. Gives meaningful error message if the current user already has a group         with this name.
