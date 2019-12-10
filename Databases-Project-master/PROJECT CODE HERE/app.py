@@ -289,6 +289,30 @@ def registerAuthFG():
 
     error = "An error has occurred. Please try again."
     return render_template("registerFriendGroup.html", error=error)
+  
+
+@app.route("/searchPoster", methods=["GET"])
+def searchPoster():
+    return render_template("searchPoster.html")
+
+
+@app.route("/searchAuth", methods=["POST"])
+def searchAuth():
+    if request.form:
+        requestData = request.form
+        username = requestData["username"]
+
+        with connection.cursor() as cursor:
+            query = "SELECT * FROM Photo WHERE photoPoster = %s"
+            cursor.execute(query, username)
+        data = cursor.fetchall()
+        if data:
+            session["username"] = username
+            return render_template("images.html", username=username, images=data)
+        error = username + " does not have any posts."
+        return render_template("searchPoster.html", error=error)
+    error = "An unknown error has occurred. Please try again."
+    return render_template("searchPoster.html", error=error)
 
 
 @app.route("/likeImage", methods=["POST"])
