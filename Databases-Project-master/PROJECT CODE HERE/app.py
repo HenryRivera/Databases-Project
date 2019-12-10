@@ -14,8 +14,8 @@ IMAGES_DIR = os.path.join(os.getcwd(), "images")
 
 connection = pymysql.connect(host="localhost",
                              user="root",
-                             password="%001001%",
-                             db="finsta",
+                             password="",
+                             db="",
                              charset="utf8mb4",
                              port=3306,
                              cursorclass=pymysql.cursors.DictCursor,
