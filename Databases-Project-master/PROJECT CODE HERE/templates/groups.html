@@ -1,0 +1,30 @@
+<html>
+    <head>
+        <title>Friend Groups</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    </head>
+    <body>
+        <h1>Your Friend Groups</h1>
+        <ul style="list-style: none;">
+        {% for group in groups %}
+            {% if group.owner_username == session["username"] %}
+            <li><label for="{{group.groupName}}">{{group.groupName}} (Owner)<input type="checkbox" value={{group.groupName}} id={{group.groupName}}></label></li>
+            {% else %}
+            <li>{{group.groupName}}</li>
+            {% endif %}
+        {% endfor %}
+        </ul>
+        <input type="text" id="userAdded"><input type="button" value="Add User" onClick="addUser(this)">
+        <br/>
+        {% if message %}
+            {{ message }}
+        {% endif %}
+        <a href="/">Go back</a>
+    </body>
+    <script>
+        function addUser(element) {
+            var userToAdd = $("#userAdded").val()
+
+        }
+    </script>
+</html>

@@ -1,15 +1,42 @@
 <html>
     <head>
         <title>Finstagram</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <style>
+            .imageContainer {
+                display: inline-block;
+            }
+            .imageContainer .likeImage {
+                position: absolute;
+                margin-left: -80px;
+                margin-top: 270px;
+                opacity: 0.2;
+            }
+            .imageContainer .likeImage:hover {
+                opacity: 0.9;
+            }
+        </style>
     </head>
     <body>
         <h1>Image Gallery</h1>
         <div>
             {% for image in images %}
-
-            <img src="/image/{{image.filePath}}" width="300"/>
+            <div class="imageContainer">
+                <img src="/image/{{image.filePath}}" width="300"/>
+                <button type="button" class="likeImage" onClick="sendImageData(this); return false;" value="{{ image.photoID }}" name="notLiked">Like</button>
+            </div>
             {% endfor %}
         </div>
         <a href="/">Go back</a>
     </body>
+<script>
+    function sendImageData(element) {
+        if (element.name == "notLiked"){
+            $.post( "/likeImage", {
+            photoID: element.value 
+            });
+            element.setAttribute("name", "Liked")
+        }   
+    }
+</script>
 </html>

@@ -200,20 +200,11 @@ def upload_image():
         # we need to update the SharedWith table if allFollowers was not selected
         if (not allFollowers):
             groupQuery = "SELECT owner_username, groupName from BelongTo WHERE member_username = %s"
-            #ownedQuery = "SELECT groupOwner, groupName FROM Friendgroup WHERE groupOwner = %s"
             updateShared = "INSERT INTO SharedWith (groupOwner, groupName, photoID) VALUES (%s, %s, %s)"
             with connection.cursor() as cursor:
                 cursor.execute(groupQuery, username)
             groups = cursor.fetchall()
 
-            #with connection.cursor() as cursor:
-            #    cursor.execute(ownedQuery, username)
-            #groupsOwned = cursor.fetchall()
-            
-            #try:
-            #    groups = memberOf + groupsOwned
-            #except:
-            #    groups = groupsOwned
             for group in groups:
                 if (request.form.get(group["groupName"]) == group["owner_username"]):
                     with connection.cursor() as cursor:
@@ -224,6 +215,7 @@ def upload_image():
     else:
         message = "Failed to upload image."
         return render_template("upload.html", message=message)
+
 
 @app.route("/follow", methods=["GET", "POST"])
 @login_required
@@ -297,6 +289,42 @@ def registerAuthFG():
 
     error = "An error has occurred. Please try again."
     return render_template("registerFriendGroup.html", error=error)
+
+
+@app.route("/likeImage", methods=["POST"])
+@login_required
+def like_image():
+    username = session["username"]
+    query = "INSERT IGNORE INTO Likes (username, photoID, liketime) values (%s, %s, %s)"
+    pID = request.form["photoID"]
+    # print(pID) -- making sure jquery is sending correct value
+    with conection.cursor() as cursor:
+        cursor.execute(query,(username, pID, time.strftime('%Y-%m-%d %H:%M:%S')))
+    return render_template("images.html")
+
+@app.route("/groups")
+@login_required
+def friend_groups():
+    username = session["username"]
+    query = "SELECT owner_username, groupName FROM BelongTo WHERE member_username = %s OR owner_username = %s"
+    with connection.cursor() as cursor:
+        cursor.execute(query, (username, username))
+    data = cursor.fetchall()
+
+    return render_template("groups.html", groups=data)
+
+@app.route("/addToGroup")
+@login_required
+def add_user():
+    pass # work in progress
+    '''
+    try:
+        message = "User successfully added to selected group(s)"
+        return render_template("groups.html", message=message)
+    except:
+        message = "User could not be added to selected group(s)"
+        return render_template("groups.html", message=message)
+    '''
 
 
 if __name__ == "__main__":
