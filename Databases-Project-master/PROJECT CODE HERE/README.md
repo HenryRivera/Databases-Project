@@ -31,11 +31,6 @@ Manage Follows: Brandon will complete Part A and Henry will test. Vice versa wil
 
 Extra Features Implemented:
 
-•	Manage Follows: Brandon completed Part A and Henry tested. Vice versa was done for Part B
-
-  a.	User enters the username of someone they want to follow. Finstagram adds an appropriate tuple to Follow, with                 acceptedFollow == False.  
-  b.	User sees list of requests others has made to follow them and has the opportunity to accept, by setting acceptFollow           to True or to decline by deleting the request from the Follow table. 
- 
 •	Like Photo: Brandon implemented this feature and Henry tested
 
   a.	restricted to liking Photos that are visible to the user 
