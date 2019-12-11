@@ -324,6 +324,8 @@ def registerAuthFG():
             with connection.cursor() as cursor:
                 query = "INSERT INTO Friendgroup (groupOwner, groupName, description) VALUES (%s, %s, %s)"
                 cursor.execute(query, (username, groupName, description))
+                query = "INSERT INTO BelongTo (member_username, owner_username, groupName) VALUES (%s, %s, %s)"
+                cursor.execute(query, (username, username, groupName))
         except pymysql.err.IntegrityError:
             error = "%s already exists." % groupName
             return render_template('registerFriendGroup.html', error=error)
