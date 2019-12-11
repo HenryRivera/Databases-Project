@@ -222,12 +222,12 @@ def follow():
     if request.form:
         username = request.form['username']
         cursor = connection.cursor()
-        query = 'SELECT * FROM person WHERE username = %s'
+        query = 'SELECT * FROM Person WHERE username = %s'
         cursor.execute(query, (username))
         data = cursor.fetchone()
 
         if data:  # if there is username with given "username"
-            query = "SELECT * FROM follow WHERE username_followed = %s AND username_follower = %s"
+            query = "SELECT * FROM Follow WHERE username_followed = %s AND username_follower = %s"
             cursor.execute(query, (username, session['username']))
             data = cursor.fetchone()
             if (data):
@@ -237,7 +237,7 @@ def follow():
                     error = "Request is still pending"
                 return render_template("follow.html", message=error)
             else:
-                query = "INSERT INTO follow VALUES(%s, %s, 0)"
+                query = "INSERT INTO Follow VALUES(%s, %s, 0)"
                 connection.commit()
                 cursor.execute(query, (username, session['username']))
                 message = "Follow Request Successful!"
@@ -256,7 +256,7 @@ def follow():
 def manageRequests():
     # get all the requests that have followstatus = 0 for the current user
     cursor = connection.cursor()
-    query = "SELECT username_follower FROM follow WHERE username_followed = %s"
+    query = "SELECT username_follower FROM Follow WHERE username_followed = %s"
     cursor.execute(query, (session["username"]))
     data = cursor.fetchall()
     if request.form:
@@ -362,13 +362,13 @@ def add_user():
         cursor.execute(userQuery, userToAdd)
     data = cursor.fetchone()
     if (data is None):
-        print("debugging user not found functionality")
+        # print("debugging user not found functionality")
         message = "User could not be added to selected group - Check if user exists"
         return message
         #return render_template("groups.html", message=message)
     else:
         try:
-            print("trying")
+            # print("trying")
             with connection.cursor() as cursor:
                 cursor.execute(addToQuery, (userToAdd, username, groups[0]))
             message = "User successfully added to selected group"
