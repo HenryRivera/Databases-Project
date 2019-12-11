@@ -15,7 +15,7 @@ IMAGES_DIR = os.path.join(os.getcwd(), "images")
 connection = pymysql.connect(host="localhost",
                              user="root",
                              password="",
-                             db="",
+                             db="finsta_db",
                              charset="utf8mb4",
                              port=3306,
                              cursorclass=pymysql.cursors.DictCursor,
@@ -77,15 +77,15 @@ def images():
     # get the photos visible to the username
     query = 'SELECT photoID,postingdate,filepath,caption,photoPoster FROM Photo WHERE photoPoster = %s OR photoID IN ' \
             '(SELECT photoID FROM Photo WHERE photoPoster != %s AND allFollowers = 1 AND photoPoster IN ' \
-            '(SELECT username_followed FROM follow WHERE username_follower = %s AND username_followed = photoPoster AND followstatus = 1)) OR photoID IN ' \
-            '(SELECT photoID FROM sharedwith NATURAL JOIN belongto NATURAL JOIN photo WHERE member_username = %s AND photoPoster != %s) ORDER BY postingdate DESC'
+            '(SELECT username_followed FROM Follow WHERE username_follower = %s AND username_followed = photoPoster AND followstatus = 1)) OR photoID IN ' \
+            '(SELECT photoID FROM SharedWith NATURAL JOIN BelongTo NATURAL JOIN Photo WHERE member_username = %s AND photoPoster != %s) ORDER BY postingdate DESC'
     cursor.execute(query, (username, username, username, username, username))
     data = cursor.fetchall()
     for post in data:  # post is a dictionary within a list of dictionaries for all the photos
         query = 'SELECT username, firstName, lastName FROM Tagged NATURAL JOIN Person WHERE tagstatus = 1 AND photoID = %s'
         cursor.execute(query, (post['photoID']))
         result = cursor.fetchall()
-        print('hello')
+        # print('hello')
         if result:
             post['tagees'] = result
         query = 'SELECT firstName, lastName FROM Person WHERE username = %s'
@@ -326,29 +326,49 @@ def like_image():
         cursor.execute(query,(username, pID, time.strftime('%Y-%m-%d %H:%M:%S')))
     return render_template("images.html")
 
+
 @app.route("/groups")
 @login_required
 def friend_groups():
     username = session["username"]
-    query = "SELECT owner_username, groupName FROM BelongTo WHERE member_username = %s OR owner_username = %s"
+    query = "SELECT DISTINCT owner_username, groupName FROM BelongTo WHERE member_username = %s OR owner_username = %s"
     with connection.cursor() as cursor:
         cursor.execute(query, (username, username))
     data = cursor.fetchall()
 
     return render_template("groups.html", groups=data)
 
-@app.route("/addToGroup")
+
+@app.route("/addToGroup", methods=["POST"])
 @login_required
 def add_user():
-    pass # work in progress
-    '''
-    try:
-        message = "User successfully added to selected group(s)"
-        return render_template("groups.html", message=message)
-    except:
-        message = "User could not be added to selected group(s)"
-        return render_template("groups.html", message=message)
-    '''
+    username = session["username"]
+    userToAdd = request.form["userToAdd"] # need to check if user exists
+    groups = request.form.getlist("groups[]")
+    # print(groups)
+    userQuery = "SELECT * FROM Person WHERE username = %s"
+    addToQuery = "INSERT INTO BelongTo VALUES (%s, %s, %s)"
+    with connection.cursor() as cursor:
+        cursor.execute(userQuery, userToAdd)
+    data = cursor.fetchone()
+    if (data is None):
+        print("debugging user not found functionality")
+        message = "User could not be added to selected group - Check if user exists"
+        return message
+        #return render_template("groups.html", message=message)
+    else:
+        try:
+            print("trying")
+            with connection.cursor() as cursor:
+                cursor.execute(addToQuery, (userToAdd, username, groups[0]))
+            message = "User successfully added to selected group"
+            return message
+            #return render_template("groups.html", message=message)
+        except:
+            print("except")
+            message = "User could not be added to selected group - Already a member"
+            return message
+            #return render_template("groups.html", message=message)
 
 
 if __name__ == "__main__":

@@ -18,7 +18,11 @@
         </style>
     </head>
     <body>
-        <h1>{{ username }}'s posts</h1>
+        {% if username %}
+        <h1>{{ username }}'s Posts</h1>
+        {% else %}
+        <h1>All Posts</h1>
+        {% endif %}
         <div>
             {% for image in images %}
             <div class="imageContainer">
