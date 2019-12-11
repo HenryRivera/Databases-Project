@@ -15,7 +15,7 @@ IMAGES_DIR = os.path.join(os.getcwd(), "images")
 connection = pymysql.connect(host="localhost",
                              user="root",
                              password="",
-                             db="",
+                             db="finsta_db",
                              charset="utf8mb4",
                              port=3306,
                              cursorclass=pymysql.cursors.DictCursor,
@@ -43,26 +43,69 @@ def index():
 @login_required
 def home():
     return render_template("home.html", username=session["username"])
+  
+  
+@app.route("/register", methods=["GET"])
+def register():
+    return render_template("register.html")
+  
+  
+@app.route("/registerAuth", methods=["POST"])
+def registerAuth():
+    if request.form:
+        requestData = request.form
+        username = requestData["username"]
+        plaintextPasword = requestData["password"] + SALT
+        hashedPassword = hashlib.sha256(plaintextPasword.encode("utf-8")).hexdigest()
+        firstName = requestData["fname"]
+        lastName = requestData["lname"]
+        bio = requestData["bio"]
 
+        try:
+            with connection.cursor() as cursor:
+                query = "INSERT INTO Person (username, password, firstName, lastName, bio) VALUES (%s, %s, %s, %s, %s)"
+                cursor.execute(query, (username, hashedPassword, firstName, lastName, bio))
+        except pymysql.err.IntegrityError:
+            error = "%s is already taken." % (username)
+            return render_template('register.html', error=error)
 
-@app.route("/upload", methods=["GET"])
-@login_required
-def upload():
-    username=session["username"]
-    # need a query to display all friend groups the user belongs to
-    query = "SELECT groupName, owner_username from BelongTo WHERE member_username = %s"
-    # ownedQuery = "SELECT groupName FROM Friendgroup WHERE groupOwner = %s"
-    with connection.cursor() as cursor:
-        cursor.execute(query, username)
-    data = cursor.fetchall()
-    
-    #with connection.cursor() as cursor:
-    #    cursor.execute(ownedQuery, username)
-    #groupsOwned = cursor.fetchall()
-    return render_template("upload.html", groupNames=data)
+        return redirect(url_for("login"))
 
+    error = "An error has occurred. Please try again."
+    return render_template("register.html", error=error)
 
-# CODE FOR FEATURE 1
+  
+# CODE FOR LOGIN
+@app.route("/login", methods=["GET"])
+def login():
+    return render_template("login.html")
+
+  
+# CODE FOR LOGIN
+@app.route("/loginAuth", methods=["POST"])
+def loginAuth():
+    if request.form:
+        requestData = request.form
+        username = requestData["username"]
+        plaintextPasword = requestData["password"] + SALT
+        hashedPassword = hashlib.sha256(plaintextPasword.encode("utf-8")).hexdigest()
+
+        with connection.cursor() as cursor:
+            query = "SELECT * FROM Person WHERE username = %s AND password = %s"
+            cursor.execute(query, (username, hashedPassword))
+        data = cursor.fetchone()
+        if data:
+            session["username"] = username
+            return redirect(url_for("home"))
+
+        error = "Incorrect username or password."
+        return render_template("login.html", error=error)
+
+    error = "An unknown error has occurred. Please try again."
+    return render_template("login.html", error=error)
+  
+  
+# CODE FOR VIEW VISIBLE PHOTOS AND VIEW FURTHER PHOTO INFO
 @app.route('/images', methods=["GET"])
 @login_required
 def images():
@@ -105,70 +148,25 @@ def image(image_name):
         return send_file(image_location, mimetype="image/jpg")
 
 
-@app.route("/login", methods=["GET"])
-def login():
-    return render_template("login.html")
-
-
-@app.route("/register", methods=["GET"])
-def register():
-    return render_template("register.html")
-
-# CODE FOR LOGIN
-@app.route("/loginAuth", methods=["POST"])
-def loginAuth():
-    if request.form:
-        requestData = request.form
-        username = requestData["username"]
-        plaintextPasword = requestData["password"] + SALT
-        hashedPassword = hashlib.sha256(plaintextPasword.encode("utf-8")).hexdigest()
-
-        with connection.cursor() as cursor:
-            query = "SELECT * FROM Person WHERE username = %s AND password = %s"
-            cursor.execute(query, (username, hashedPassword))
-        data = cursor.fetchone()
-        if data:
-            session["username"] = username
-            return redirect(url_for("home"))
-
-        error = "Incorrect username or password."
-        return render_template("login.html", error=error)
-
-    error = "An unknown error has occurred. Please try again."
-    return render_template("login.html", error=error)
-
-
-@app.route("/registerAuth", methods=["POST"])
-def registerAuth():
-    if request.form:
-        requestData = request.form
-        username = requestData["username"]
-        plaintextPasword = requestData["password"] + SALT
-        hashedPassword = hashlib.sha256(plaintextPasword.encode("utf-8")).hexdigest()
-        firstName = requestData["fname"]
-        lastName = requestData["lname"]
-        bio = requestData["bio"]
-
-        try:
-            with connection.cursor() as cursor:
-                query = "INSERT INTO Person (username, password, firstName, lastName, bio) VALUES (%s, %s, %s, %s, %s)"
-                cursor.execute(query, (username, hashedPassword, firstName, lastName, bio))
-        except pymysql.err.IntegrityError:
-            error = "%s is already taken." % (username)
-            return render_template('register.html', error=error)
-
-        return redirect(url_for("login"))
-
-    error = "An error has occurred. Please try again."
-    return render_template("register.html", error=error)
-
-
-@app.route("/logout", methods=["GET"])
-def logout():
-    session.pop("username")
-    return redirect("/")
-
-# CODE FOR FEATURE 3
+# CODE FOR POST A PHOTO
+@app.route("/upload", methods=["GET"])
+@login_required
+def upload():
+    username=session["username"]
+    # need a query to display all friend groups the user belongs to
+    query = "SELECT groupName, owner_username from BelongTo WHERE member_username = %s"
+    # ownedQuery = "SELECT groupName FROM Friendgroup WHERE groupOwner = %s"
+    with connection.cursor() as cursor:
+        cursor.execute(query, username)
+    data = cursor.fetchall()
+    
+    #with connection.cursor() as cursor:
+    #    cursor.execute(ownedQuery, username)
+    #groupsOwned = cursor.fetchall()
+    return render_template("upload.html", groupNames=data)
+  
+  
+# CODE FOR POST A PHOTO
 @app.route("/uploadImage", methods=["POST"])
 @login_required
 def upload_image():
@@ -215,8 +213,9 @@ def upload_image():
     else:
         message = "Failed to upload image."
         return render_template("upload.html", message=message)
-
-
+      
+      
+# CODE FOR MANAGE FOLLOWS PART A
 @app.route("/follow", methods=["GET", "POST"])
 @login_required
 def follow():
@@ -250,7 +249,8 @@ def follow():
         return render_template('follow.html', message=error)
     return render_template('follow.html')
 
-
+  
+# CODE FOR MANAGE FOLLOWS PART B
 @app.route("/manageRequests", methods=["GET", "POST"])
 @login_required
 def manageRequests():
@@ -265,11 +265,53 @@ def manageRequests():
     cursor.close()
     return render_template("manageRequests.html", followers=data)
   
+  
+# CODE FOR LIKE PHOTO
+@app.route("/likeImage", methods=["POST"])
+@login_required
+def like_image():
+    username = session["username"]
+    query = "INSERT IGNORE INTO Likes (username, photoID, liketime) values (%s, %s, %s)"
+    pID = request.form["photoID"]
+    # print(pID) -- making sure jquery is sending correct value
+    with conection.cursor() as cursor:
+        cursor.execute(query,(username, pID, time.strftime('%Y-%m-%d %H:%M:%S')))
+    return render_template("images.html")
+  
+  
+# CODE FOR SEARCH BY POSTER
+@app.route("/searchPoster", methods=["GET"])
+def searchPoster():
+    return render_template("searchPoster.html")
+
+  
+# CODE FOR SEARCH BY POSTER
+@app.route("/searchAuth", methods=["POST"])
+def searchAuth():
+    if request.form:
+        requestData = request.form
+        username = requestData["username"]
+
+        with connection.cursor() as cursor:
+            query = "SELECT * FROM Photo WHERE photoPoster = %s"
+            cursor.execute(query, username)
+        data = cursor.fetchall()
+        if data:
+            session["username"] = username
+            return render_template("images.html", username=username, images=data)
+        error = username + " does not have any posts."
+        return render_template("searchPoster.html", error=error)
+    error = "An unknown error has occurred. Please try again."
+    return render_template("searchPoster.html", error=error)
+  
+  
+# CODE FOR ADD FRIENDGROUP
 @app.route("/registerFriendGroup", methods=["GET"])
 def registerFriendGroup():
     return render_template("registerFriendGroup.html")
   
   
+# CODE FOR ADD FRIENDGROUP
 @app.route("/registerAuthFG", methods=["POST"])
 def registerAuthFG():
     username = session["username"]
@@ -290,43 +332,8 @@ def registerAuthFG():
     error = "An error has occurred. Please try again."
     return render_template("registerFriendGroup.html", error=error)
   
-
-@app.route("/searchPoster", methods=["GET"])
-def searchPoster():
-    return render_template("searchPoster.html")
-
-
-@app.route("/searchAuth", methods=["POST"])
-def searchAuth():
-    if request.form:
-        requestData = request.form
-        username = requestData["username"]
-
-        with connection.cursor() as cursor:
-            query = "SELECT * FROM Photo WHERE photoPoster = %s"
-            cursor.execute(query, username)
-        data = cursor.fetchall()
-        if data:
-            session["username"] = username
-            return render_template("images.html", username=username, images=data)
-        error = username + " does not have any posts."
-        return render_template("searchPoster.html", error=error)
-    error = "An unknown error has occurred. Please try again."
-    return render_template("searchPoster.html", error=error)
-
-
-@app.route("/likeImage", methods=["POST"])
-@login_required
-def like_image():
-    username = session["username"]
-    query = "INSERT IGNORE INTO Likes (username, photoID, liketime) values (%s, %s, %s)"
-    pID = request.form["photoID"]
-    # print(pID) -- making sure jquery is sending correct value
-    with conection.cursor() as cursor:
-        cursor.execute(query,(username, pID, time.strftime('%Y-%m-%d %H:%M:%S')))
-    return render_template("images.html")
-
-
+  
+# CODE FOR ADD FRIEND  
 @app.route("/groups")
 @login_required
 def friend_groups():
@@ -338,7 +345,8 @@ def friend_groups():
 
     return render_template("groups.html", groups=data)
 
-
+  
+# CODE FOR ADD FRIEND
 @app.route("/addToGroup", methods=["POST"])
 @login_required
 def add_user():
@@ -369,6 +377,12 @@ def add_user():
             message = "User could not be added to selected group - Already a member"
             return message
             #return render_template("groups.html", message=message)
+
+
+@app.route("/logout", methods=["GET"])
+def logout():
+    session.pop("username")
+    return redirect("/")
 
 
 if __name__ == "__main__":
