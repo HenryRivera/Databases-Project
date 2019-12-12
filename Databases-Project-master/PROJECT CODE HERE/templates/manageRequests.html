@@ -4,18 +4,20 @@
 	<title>Manage Follow Requests</title>
 </head>
 <body>
+	<form action="/manageRequests" method="POST">
 	{% if followers %}
 		<select name="followRequests" multiple>
             {% for request in followers %}
             <option value="{{request.username_follower}}">{{request.username_follower}}</option>
             {% endfor %}
-	        </select>
-	        <br>
-	        <input type="submit" name = "Accept" value="Accept Request">
-            <input type = "submit" name = "Decline" value="Decline Request">
+	    </select>
+		<br>
+		<input type="submit" name = "action" value="Accept Request">
+		<input type = "submit" name = "action" value="Decline Request">
 	{% else %}
 	<p>No new follow requests</p>
 	{% endif %}
+	</form>
     <br>
     <a href="/">Go back</a>
 

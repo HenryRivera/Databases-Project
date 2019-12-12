@@ -255,14 +255,26 @@ def follow():
 @login_required
 def manageRequests():
     # get all the requests that have followstatus = 0 for the current user
-    cursor = connection.cursor()
-    query = "SELECT username_follower FROM Follow WHERE username_followed = %s"
-    cursor.execute(query, (session["username"]))
+    query = "SELECT username_follower FROM Follow WHERE username_followed = %s AND followstatus = 0"
+    with connection.cursor() as cursor:
+        cursor.execute(query, (session["username"]))
     data = cursor.fetchall()
+    
     if request.form:
-        pass
-        # handle form goes here
-    cursor.close()
+        newFollower = request.form.get("followRequests")
+        if request.form.get("action") == "Accept Request":
+            updateQuery = "UPDATE Follow SET followstatus = 1 WHERE username_followed = %s AND username_follower = %s"
+            with connection.cursor() as cursor:
+                cursor.execute(updateQuery, (session["username"], newFollower))
+        else:
+            deleteQuery = "DELETE FROM Follow WHERE username_followed = %s AND username_follower = %s"
+            with connection.cursor() as cursor:
+                cursor.execute(deleteQuery, (session["username"], newFollower))
+    
+    with connection.cursor() as cursor:
+        cursor.execute(query, (session["username"]))
+    data = cursor.fetchall()
+
     return render_template("manageRequests.html", followers=data)
   
   
@@ -274,7 +286,7 @@ def like_image():
     query = "INSERT IGNORE INTO Likes (username, photoID, liketime) values (%s, %s, %s)"
     pID = request.form["photoID"]
     # print(pID) -- making sure jquery is sending correct value
-    with conection.cursor() as cursor:
+    with connection.cursor() as cursor:
         cursor.execute(query,(username, pID, time.strftime('%Y-%m-%d %H:%M:%S')))
     return render_template("images.html")
   
@@ -297,7 +309,6 @@ def searchAuth():
             cursor.execute(query, username)
         data = cursor.fetchall()
         if data:
-            session["username"] = username
             return render_template("images.html", username=username, images=data)
         error = username + " does not have any posts."
         return render_template("searchPoster.html", error=error)
