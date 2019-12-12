@@ -7,9 +7,9 @@
                 display: inline-block;
             }
             .imageContainer .likeImage {
-                position: absolute;
-                margin-left: 8px;
-                margin-top: -85px;
+                position: relative;
+                margin-left: 5px;
+                margin-top: -130px;
                 opacity: 0.2;
             }
             .imageContainer .likeImage:hover {
@@ -26,9 +26,23 @@
         <div>
             {% for image in images %}
             <div class="imageContainer">
+                <a href="/images/{{ image.filepath }}">
                 <img src="/image/{{image.filePath}}" width="300"/>
-                <p>Posted by: {{firstName}} {{ lastName }} on {{image.postingdate}}</p>
+                </a>
+                <p>Posted by: {{image.fname}} {{ image.lname }}</p>
+                <p>Posted on: {{ image.postingdate }}</p>
                 <button type="button" class="likeImage" onClick="sendImageData(this); return false;" value="{{ image.photoID }}" name="notLiked">Like</button>
+                <ul style="list-style-type:none;">
+                    {% for rating in image.ratings %}
+                        <li>User {{ rating.username }} gave a {{ rating.rating }} rating</li>
+                    {% endfor %}
+                </ul>
+                <p>TAGGED USERS:</p>
+                <ul style="list-style-type:none;">
+                    {% for tagee in image.tagees %}
+                        <li>{{ tagee.firstName }} {{ tagee.lastName }}</li>
+                    {% endfor %}
+                </ul>
             </div>
             {% endfor %}
         </div>

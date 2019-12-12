@@ -59,12 +59,12 @@ def registerAuth():
         hashedPassword = hashlib.sha256(plaintextPasword.encode("utf-8")).hexdigest()
         firstName = requestData["fname"]
         lastName = requestData["lname"]
-        bio = requestData["bio"]
+        # bio = requestData["bio"]
 
         try:
             with connection.cursor() as cursor:
-                query = "INSERT INTO Person (username, password, firstName, lastName, bio) VALUES (%s, %s, %s, %s, %s)"
-                cursor.execute(query, (username, hashedPassword, firstName, lastName, bio))
+                query = "INSERT INTO Person (username, password, firstName, lastName) VALUES (%s, %s, %s, %s)"
+                cursor.execute(query, (username, hashedPassword, firstName, lastName))
         except pymysql.err.IntegrityError:
             error = "%s is already taken." % (username)
             return render_template('register.html', error=error)
@@ -124,24 +124,32 @@ def images():
             '(SELECT photoID FROM SharedWith NATURAL JOIN BelongTo NATURAL JOIN Photo WHERE member_username = %s AND photoPoster != %s) ORDER BY postingdate DESC'
     cursor.execute(query, (username, username, username, username, username))
     data = cursor.fetchall()
-    for post in data:  # post is a dictionary within a list of dictionaries for all the photos
-        query = 'SELECT username, firstName, lastName FROM Tagged NATURAL JOIN Person WHERE tagstatus = 1 AND photoID = %s'
-        cursor.execute(query, (post['photoID']))
-        result = cursor.fetchall()
-        # print('hello')
-        if result:
-            post['tagees'] = result
-        query = 'SELECT firstName, lastName FROM Person WHERE username = %s'
-        cursor.execute(query, (post['photoPoster']))
-        ownerInfo = cursor.fetchone()
-        post['firstName'] = ownerInfo['firstName']
-        post['lastName'] = ownerInfo['lastName']
+    
 
+    for post in data:
+        nameQuery = "SELECT firstName, lastName FROM Person WHERE username = %s"
+        cursor.execute(nameQuery, (post["photoPoster"]))
+        name = cursor.fetchone()
+        post["fname"] = name["firstName"]
+        post["lname"] = name["lastName"]
+
+        ratingsQuery = "SELECT username, rating FROM Likes WHERE photoID = %s"
+        cursor.execute(ratingsQuery, post["photoID"])
+        ratingsData = cursor.fetchall()
+        post["ratings"] = ratingsData
+
+        tagQuery = "SELECT firstName, lastName FROM Tagged NATURAL JOIN Person WHERE tagStatus = 1 AND photoID = %s"
+        cursor.execute(tagQuery, post["photoID"])
+        taggedUsers = cursor.fetchall()
+        post["tagees"] = taggedUsers
+
+
+    # print(data)
     cursor.close()
-    return render_template('images.html', images=data, firstName=firstName, lastName=lastName)
+    return render_template('images.html', images=data)
 
 
-@app.route("/image/<image_name>", methods=["GET"])
+@app.route("/images/<image_name>", methods=["GET"])
 def image(image_name):
     image_location = os.path.join(IMAGES_DIR, image_name)
     if os.path.isfile(image_location):
@@ -390,6 +398,14 @@ def add_user():
             return message
             #return render_template("groups.html", message=message)
 
+'''
+@app.route("/images/<image_name>/info" methods=["GET"])
+@login_required
+def image_info():
+    ratingsQuery = "SELECT username, rating FROM Likes WHERE photoID = %s"
+    with connection.cursor as cursor:
+        cursor.execute(ratingsQuery, )
+'''
 
 @app.route("/logout", methods=["GET"])
 def logout():
