@@ -226,7 +226,7 @@ def follow():
         cursor.execute(query, (username))
         data = cursor.fetchone()
 
-        if data:  # if there is username with given "username"
+        if data:
             query = "SELECT * FROM Follow WHERE username_followed = %s AND username_follower = %s"
             cursor.execute(query, (username, session['username']))
             data = cursor.fetchone()
@@ -254,7 +254,6 @@ def follow():
 @app.route("/manageRequests", methods=["GET", "POST"])
 @login_required
 def manageRequests():
-    # get all the requests that have followstatus = 0 for the current user
     query = "SELECT username_follower FROM Follow WHERE username_followed = %s AND followstatus = 0"
     with connection.cursor() as cursor:
         cursor.execute(query, (session["username"]))
